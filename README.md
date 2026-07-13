@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Delivery Buddy 🚚🎧
 
-## Getting Started
+A mobile-first PWA for Amazon DSP delivery drivers: a live stops-per-hour pace calculator, built for one-handed use in a moving vehicle, plus an AI companion for route tips and quick pep talks.
 
-First, run the development server:
+## Design
+
+Dark charcoal + warm amber, always on (no light mode) — built to be glanceable in bright sunlight or at night, with huge tabular numbers, chip-based inputs to minimize typing, and large tap targets throughout. The chat companion ("Buddy") gets its own cyan accent and avatar so it reads as a distinct feature, not a settings menu.
+
+## Features
+
+**Pace calculator (core)**
+- Start a shift: total stops assigned (quick-pick chips or exact entry), start time, optional target pace
+- One-tap `+1 Stop`, plus `+5` / `−1` / exact-correct for catching up on logging
+- Live pace, stops remaining, projected finish time, and ahead/behind-target status
+- Pause/resume for breaks — paused time doesn't count against pace
+- End-of-shift summary: total stops, active time, average pace, best/worst hour
+- Last 20 shifts saved locally for a quick glance at trends
+
+**Buddy (AI companion)**
+- Slide-up chat drawer, doesn't compete with the calculator for screen space
+- Knows your live shift context (pace, stops remaining, ahead/behind target) so advice is situational
+- Streams replies from `claude-haiku-4-5-20251001` via a serverless proxy — your API key never reaches the browser
+- Quick-start suggestions: route planning, general driving tips, motivation check-ins
+
+**PWA**
+- Installable to your phone's home screen (manifest + icons + minimal service worker)
+- Works fully offline for the calculator (all shift data is local-first in `localStorage`)
+
+## Tech stack
+
+Next.js (App Router, TypeScript), Tailwind CSS 4, `@anthropic-ai/sdk` for the chat proxy. No database, no login — shift data lives in the browser; the only server code is a stateless `/api/chat` route.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) — best experienced on an actual phone (open your machine's LAN IP shown in the terminal from your phone's browser).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Enabling the chat companion
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Buddy needs an Anthropic API key to actually reply (get one at [console.anthropic.com](https://console.anthropic.com)):
 
-## Learn More
+```bash
+cp .env.example .env.local
+# then edit .env.local and set ANTHROPIC_API_KEY
+```
 
-To learn more about Next.js, take a look at the following resources:
+Without a key, the rest of the app works fully — the chat drawer just shows a friendly error when you try to send a message.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploys as-is on [Vercel](https://vercel.com): push to GitHub, import the repo, set `ANTHROPIC_API_KEY` as an environment variable, deploy. No database to provision.
 
-## Deploy on Vercel
+## Suggested resume bullet
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Built Delivery Buddy, a mobile-first PWA for delivery drivers (Next.js, TypeScript, Tailwind) with a live pace/ETA calculator and a streaming AI companion (Claude API via a serverless proxy) that gives situational advice based on real-time shift data.
