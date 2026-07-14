@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Star } from "lucide-react";
 
 export function RatingStars({
   onRate,
@@ -20,12 +21,16 @@ export function RatingStars({
           disabled={disabled}
           onMouseEnter={() => setHover(n)}
           onClick={() => onRate(n)}
-          className={`text-xl leading-none transition-transform hover:scale-125 disabled:opacity-40 ${
-            n <= hover ? "text-accent-2" : "text-muted"
-          }`}
+          className="transition-transform hover:scale-125 disabled:opacity-40"
           aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
         >
-          ★
+          <Star
+            className={`h-5 w-5 ${
+              n <= hover
+                ? "text-accent-2 fill-accent-2"
+                : "text-muted-foreground"
+            }`}
+          />
         </button>
       ))}
     </div>

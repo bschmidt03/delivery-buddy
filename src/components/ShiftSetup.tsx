@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Clock3, Gauge, History, Package, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import type { Shift } from "@/lib/shift";
 import { formatDuration, formatTime, currentPace, activeMsElapsed } from "@/lib/shift";
 
@@ -17,6 +19,28 @@ function timeInputToToday(value: string, base: number): number {
   const d = new Date(base);
   d.setHours(h, m, 0, 0);
   return d.getTime();
+}
+
+function SectionLabel({
+  icon: Icon,
+  children,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-2.5 uppercase tracking-[0.14em] font-semibold">
+      <Icon className="h-3.5 w-3.5 text-primary" />
+      {children}
+      {hint && (
+        <span className="normal-case tracking-normal font-normal text-muted-foreground/60">
+          {hint}
+        </span>
+      )}
+    </p>
+  );
 }
 
 export function ShiftSetup({
@@ -44,64 +68,68 @@ export function ShiftSetup({
   }
 
   return (
-    <div className="flex-1 flex flex-col px-5 pt-8 pb-6 max-w-md mx-auto w-full animate-fade-in">
-      <div className="flex items-center gap-2 mb-8">
-        <div className="h-9 w-9 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-lg font-bold">
-          D
+    <div className="relative flex-1 flex flex-col px-5 pt-8 pb-6 max-w-md mx-auto w-full animate-fade-in">
+      {/* Ambient glow behind the header */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
+      />
+
+      <div className="relative flex items-center gap-3 mb-9">
+        <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-accent-2 flex items-center justify-center shadow-lg shadow-primary/25 ring-1 ring-white/20">
+          <Truck className="h-5.5 w-5.5 text-primary-foreground" strokeWidth={2.25} />
         </div>
-        <h1 className="text-xl font-semibold tracking-tight">Delivery Buddy</h1>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight leading-tight">Delivery Buddy</h1>
+          <p className="text-xs text-muted-foreground">Set up today&apos;s route</p>
+        </div>
       </div>
 
-      <p className="text-sm text-muted mb-2 uppercase tracking-wide font-medium">
-        Stops assigned today
-      </p>
+      <SectionLabel icon={Package}>Stops assigned today</SectionLabel>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {STOP_PRESETS.map((n) => (
           <button
             key={n}
             onClick={() => setTotalStops(n)}
-            className={`rounded-xl py-3 text-lg font-semibold tabular transition-colors ${
+            className={`rounded-xl py-3 text-lg font-semibold tabular transition-all ${
               totalStops === n
-                ? "bg-accent text-bg"
-                : "bg-surface text-fg border border-border active:bg-surface-2"
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-[1.02]"
+                : "bg-card text-fg border border-border active:bg-secondary"
             }`}
           >
             {n}
           </button>
         ))}
       </div>
-      <input
+      <Input
         type="number"
         inputMode="numeric"
         placeholder="Or type exact count"
         value={totalStops ?? ""}
         onChange={(e) => setTotalStops(e.target.value ? Number(e.target.value) : null)}
-        className="w-full rounded-xl bg-surface border border-border px-4 py-3 text-lg tabular placeholder:text-muted mb-8 focus:outline-none focus:border-accent"
+        className="h-12 rounded-xl bg-card px-4 text-lg tabular mb-8"
       />
 
-      <p className="text-sm text-muted mb-2 uppercase tracking-wide font-medium">
-        Shift start time
-      </p>
-      <input
+      <SectionLabel icon={Clock3}>Shift start time</SectionLabel>
+      <Input
         type="time"
         value={startTimeStr}
         onChange={(e) => setStartTimeStr(e.target.value)}
-        className="w-full rounded-xl bg-surface border border-border px-4 py-3 text-lg tabular mb-8 focus:outline-none focus:border-accent"
+        className="h-12 rounded-xl bg-card px-4 text-lg tabular mb-8"
       />
 
-      <p className="text-sm text-muted mb-2 uppercase tracking-wide font-medium">
-        Target pace{" "}
-        <span className="normal-case font-normal text-muted/70">(optional)</span>
-      </p>
+      <SectionLabel icon={Gauge} hint="(optional)">
+        Target pace
+      </SectionLabel>
       <div className="grid grid-cols-4 gap-2 mb-10">
         {PACE_PRESETS.map((n) => (
           <button
             key={n}
             onClick={() => setTargetPace(targetPace === n ? null : n)}
-            className={`rounded-xl py-3 text-base font-semibold tabular transition-colors ${
+            className={`rounded-xl py-3 text-base font-semibold tabular transition-all ${
               targetPace === n
-                ? "bg-accent text-bg"
-                : "bg-surface text-fg border border-border active:bg-surface-2"
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-[1.02]"
+                : "bg-card text-fg border border-border active:bg-secondary"
             }`}
           >
             {n}/hr
@@ -112,7 +140,7 @@ export function ShiftSetup({
       <button
         onClick={handleStart}
         disabled={!canStart}
-        className="w-full rounded-2xl bg-accent text-bg text-xl font-bold py-5 shadow-lg shadow-accent/20 transition-transform active:scale-[0.98] disabled:opacity-30 disabled:shadow-none mb-8"
+        className="w-full rounded-2xl bg-gradient-to-b from-primary to-[#f07a2b] text-primary-foreground text-xl font-bold py-5 shadow-xl shadow-primary/25 ring-1 ring-white/20 transition-all active:scale-[0.98] disabled:opacity-30 disabled:shadow-none disabled:ring-0 mb-8"
       >
         Start Shift
       </button>
@@ -121,8 +149,9 @@ export function ShiftSetup({
         <div className="mt-auto pt-4 border-t border-border">
           <button
             onClick={() => setShowHistory((v) => !v)}
-            className="text-sm text-muted font-medium mb-3"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium mb-3"
           >
+            <History className="h-4 w-4" />
             {showHistory ? "Hide" : "Show"} recent shifts ({history.length})
           </button>
           {showHistory && (
@@ -133,9 +162,9 @@ export function ShiftSetup({
                 return (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between rounded-lg bg-surface px-3 py-2 text-sm"
+                    className="flex items-center justify-between rounded-xl bg-card border border-border px-3.5 py-2.5 text-sm"
                   >
-                    <span className="text-muted">
+                    <span className="text-muted-foreground">
                       {formatTime(s.startTime)} · {formatDuration(ms)}
                     </span>
                     <span className="tabular font-semibold">
