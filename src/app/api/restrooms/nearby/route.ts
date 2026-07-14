@@ -3,7 +3,11 @@ import type { OsmRestroom } from "@/types/bathroom";
 
 export const runtime = "nodejs";
 
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+// The public Overpass instances rate-limit and occasionally 504; try each in order.
+const OVERPASS_URLS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
 // Refuse huge bounding boxes so a zoomed-out map can't hammer Overpass.
 const MAX_BBOX_DEGREES = 0.5;
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -77,23 +81,28 @@ export async function GET(request: Request) {
     out center ${MAX_RESULTS};
   `;
 
-  let elements: OverpassElement[];
-  try {
-    const res = await fetch(OVERPASS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        // Overpass rejects requests without an identifying User-Agent.
-        "User-Agent": "delivery-buddy/0.1 (pit-stop restroom map)",
-      },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!res.ok) throw new Error(`Overpass ${res.status}`);
-    const data = await res.json();
-    elements = data.elements ?? [];
-  } catch (err) {
-    console.error("Overpass fetch failed:", err);
+  let elements: OverpassElement[] | null = null;
+  for (const url of OVERPASS_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          // Overpass rejects requests without an identifying User-Agent.
+          "User-Agent": "delivery-buddy/0.1 (pit-stop restroom map)",
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      const data = await res.json();
+      elements = data.elements ?? [];
+      break;
+    } catch (err) {
+      console.error(`Overpass fetch failed (${url}):`, err);
+    }
+  }
+  if (elements === null) {
     return NextResponse.json(
       { error: "Community restroom data is unavailable right now." },
       { status: 502 }
