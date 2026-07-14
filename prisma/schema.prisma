@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// No User model: pit stops are anonymous/crowdsourced by design (see project notes).
+model Bathroom {
+  id           String   @id @default(cuid())
+  name         String
+  notes        String?
+  lat          Float
+  lng          Float
+  accessible   Boolean  @default(false)
+  requiresCode Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  ratings      Rating[]
+}
+
+model Rating {
+  id         String   @id @default(cuid())
+  stars      Int
+  createdAt  DateTime @default(now())
+  bathroom   Bathroom @relation(fields: [bathroomId], references: [id])
+  bathroomId String
+}

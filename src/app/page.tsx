@@ -7,6 +7,8 @@ import { ActiveShiftView } from "@/components/ActiveShiftView";
 import { EndShiftSummary } from "@/components/EndShiftSummary";
 import { ChatFab } from "@/components/ChatFab";
 import { ChatDrawer } from "@/components/ChatDrawer";
+import { PitStopFab } from "@/components/PitStopFab";
+import { PitStopSheet } from "@/components/PitStopSheet";
 import { loadHistory } from "@/lib/storage";
 import type { Shift } from "@/lib/shift";
 import {
@@ -32,6 +34,7 @@ export default function Home() {
   } = useShift();
   const [history, setHistory] = useState<Shift[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
+  const [pitStopOpen, setPitStopOpen] = useState(false);
 
   useEffect(() => {
     // Same post-hydration localStorage read as useShift's current-shift sync.
@@ -73,6 +76,9 @@ export default function Home() {
       ) : (
         <ShiftSetup onStart={startShift} history={history} />
       )}
+
+      <PitStopFab onClick={() => setPitStopOpen(true)} />
+      <PitStopSheet open={pitStopOpen} onClose={() => setPitStopOpen(false)} />
 
       <ChatFab onClick={() => setChatOpen(true)} />
       <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} getContext={getContext} />
