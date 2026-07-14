@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // No User model: pit stops are anonymous/crowdsourced by design (see project notes).
