@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import type { Bathroom, LatLng } from "@/types/bathroom";
+import type { Bathroom, LatLng, MapBounds, OsmRestroom } from "@/types/bathroom";
 
 function bathroomIcon(topRated: boolean) {
   return new L.DivIcon({
@@ -25,12 +25,28 @@ function bathroomIcon(topRated: boolean) {
   });
 }
 
+// Community (OpenStreetMap) pins: smaller, dashed outline, deliberately
+// quieter than driver-verified amber pins.
+const osmIcon = new L.DivIcon({
+  className: "",
+  html: `
+    <div class="relative flex items-center justify-center h-7 w-7">
+      <div class="flex items-center justify-center h-6 w-6 rounded-full bg-bg/85 border border-dashed border-accent-2/70 shadow-md shadow-black/40 text-[11px] opacity-90">
+        🚻
+      </div>
+    </div>
+  `,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  popupAnchor: [0, -14],
+});
+
 const pendingIcon = new L.DivIcon({
   className: "",
   html: `
     <div class="relative flex items-center justify-center h-9 w-9 -translate-y-1">
-      <div class="absolute h-8 w-8 rounded-full border-2 border-dashed border-accent animate-[spin_6s_linear_infinite]"></div>
-      <div class="h-3 w-3 rounded-full bg-accent shadow-lg shadow-accent/50"></div>
+      <div class="absolute h-8 w-8 rounded-full border-2 border-dashed border-primary animate-[spin_6s_linear_infinite]"></div>
+      <div class="h-3 w-3 rounded-full bg-primary shadow-lg shadow-primary/50"></div>
     </div>
   `,
   iconSize: [36, 36],
@@ -66,22 +82,52 @@ function FlyTo({ target }: { target: LatLng | null }) {
   return null;
 }
 
+function toBounds(map: L.Map): MapBounds {
+  const b = map.getBounds();
+  return {
+    south: b.getSouth(),
+    west: b.getWest(),
+    north: b.getNorth(),
+    east: b.getEast(),
+  };
+}
+
+function BoundsWatcher({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }) {
+  const map = useMapEvents({
+    moveend() {
+      onBoundsChange(toBounds(map));
+    },
+  });
+
+  useEffect(() => {
+    onBoundsChange(toBounds(map));
+  }, [map, onBoundsChange]);
+
+  return null;
+}
+
 export function PitStopMap({
   bathrooms,
+  osmRestrooms = [],
   userLocation,
   addMode,
   onMapClick,
+  onBoundsChange,
   pendingPin,
   flyToTarget,
   renderPopup,
+  renderOsmPopup,
 }: {
   bathrooms: Bathroom[];
+  osmRestrooms?: OsmRestroom[];
   userLocation: LatLng | null;
   addMode: boolean;
   onMapClick: (pos: LatLng) => void;
+  onBoundsChange?: (b: MapBounds) => void;
   pendingPin: LatLng | null;
   flyToTarget: LatLng | null;
   renderPopup: (bathroom: Bathroom) => React.ReactNode;
+  renderOsmPopup?: (restroom: OsmRestroom) => React.ReactNode;
 }) {
   const center = userLocation ?? { lat: 39.8283, lng: -98.5795 };
   const zoom = userLocation ? 14 : 4;
@@ -99,8 +145,15 @@ export function PitStopMap({
       />
       <ClickHandler active={addMode} onClick={onMapClick} />
       <FlyTo target={flyToTarget} />
+      {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
 
       {userLocation && <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />}
+
+      {osmRestrooms.map((r) => (
+        <Marker key={r.id} position={[r.lat, r.lng]} icon={osmIcon}>
+          {renderOsmPopup && <Popup>{renderOsmPopup(r)}</Popup>}
+        </Marker>
+      ))}
 
       {bathrooms.map((b) => (
         <Marker
